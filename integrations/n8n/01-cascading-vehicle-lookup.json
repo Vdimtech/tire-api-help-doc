@@ -1,0 +1,176 @@
+{
+  "name": "Tire API – Cascading Vehicle Lookup (Year → Make → Model → Trim → Tire Size)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "When clicking Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-220, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-year",
+              "name": "year",
+              "value": "2023",
+              "type": "string"
+            },
+            {
+              "id": "set-make",
+              "name": "make",
+              "value": "Toyota",
+              "type": "string"
+            },
+            {
+              "id": "set-model",
+              "name": "model",
+              "value": "Camry",
+              "type": "string"
+            },
+            {
+              "id": "set-trim",
+              "name": "trim",
+              "value": "LE AWD",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Set Inputs",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://tire.vdim.app/api/v1/by_vehicle/model",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "year",
+              "value": "={{ $('Set Inputs').item.json.year }}"
+            },
+            {
+              "name": "make",
+              "value": "={{ $('Set Inputs').item.json.make }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Get Models (year + make)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_ME",
+          "name": "Tire API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://tire.vdim.app/api/v1/by_vehicle/trim",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "year",
+              "value": "={{ $('Set Inputs').item.json.year }}"
+            },
+            {
+              "name": "make",
+              "value": "={{ $('Set Inputs').item.json.make }}"
+            },
+            {
+              "name": "model",
+              "value": "={{ $('Set Inputs').item.json.model }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Get Trims (+ model)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_ME",
+          "name": "Tire API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://tire.vdim.app/api/v1/by_vehicle/tiresize",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "year",
+              "value": "={{ $('Set Inputs').item.json.year }}"
+            },
+            {
+              "name": "make",
+              "value": "={{ $('Set Inputs').item.json.make }}"
+            },
+            {
+              "name": "model",
+              "value": "={{ $('Set Inputs').item.json.model }}"
+            },
+            {
+              "name": "trim",
+              "value": "={{ $('Set Inputs').item.json.trim }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0005-4000-8000-000000000005",
+      "name": "Get Tire Sizes (+ trim)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_ME",
+          "name": "Tire API Key"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking Execute": {
+      "main": [[{ "node": "Set Inputs", "type": "main", "index": 0 }]]
+    },
+    "Set Inputs": {
+      "main": [[{ "node": "Get Models (year + make)", "type": "main", "index": 0 }]]
+    },
+    "Get Models (year + make)": {
+      "main": [[{ "node": "Get Trims (+ model)", "type": "main", "index": 0 }]]
+    },
+    "Get Trims (+ model)": {
+      "main": [[{ "node": "Get Tire Sizes (+ trim)", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "pinData": {}
+}

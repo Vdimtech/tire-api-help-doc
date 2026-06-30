@@ -1,0 +1,116 @@
+{
+  "name": "Tire API – Tire Dimensions Lookup (single call)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b2c3d4e5-0001-4000-8000-000000000001",
+      "name": "When clicking Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-220, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-year",
+              "name": "year",
+              "value": "2023",
+              "type": "string"
+            },
+            {
+              "id": "set-make",
+              "name": "make",
+              "value": "Toyota",
+              "type": "string"
+            },
+            {
+              "id": "set-model",
+              "name": "model",
+              "value": "Camry",
+              "type": "string"
+            },
+            {
+              "id": "set-trim",
+              "name": "trim",
+              "value": "LE AWD",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-0002-4000-8000-000000000002",
+      "name": "Set Vehicle",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://tire.vdim.app/api/v1/tire_dimensions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "year",
+              "value": "={{ $json.year }}"
+            },
+            {
+              "name": "make",
+              "value": "={{ $json.make }}"
+            },
+            {
+              "name": "model",
+              "value": "={{ $json.model }}"
+            },
+            {
+              "name": "trim",
+              "value": "={{ $json.trim }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-0003-4000-8000-000000000003",
+      "name": "Get Tire Dimensions",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_ME",
+          "name": "Tire API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "dimensions",
+        "options": {}
+      },
+      "id": "b2c3d4e5-0004-4000-8000-000000000004",
+      "name": "Split Out Dimensions",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [480, 300]
+    }
+  ],
+  "connections": {
+    "When clicking Execute": {
+      "main": [[{ "node": "Set Vehicle", "type": "main", "index": 0 }]]
+    },
+    "Set Vehicle": {
+      "main": [[{ "node": "Get Tire Dimensions", "type": "main", "index": 0 }]]
+    },
+    "Get Tire Dimensions": {
+      "main": [[{ "node": "Split Out Dimensions", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "pinData": {}
+}

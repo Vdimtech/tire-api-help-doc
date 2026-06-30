@@ -1,0 +1,86 @@
+{
+  "name": "Tire API – Reverse Lookup (tire size → vehicles)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "c3d4e5f6-0001-4000-8000-000000000001",
+      "name": "When clicking Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-220, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-tiresize",
+              "name": "tiresize",
+              "value": "225/60R16",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c3d4e5f6-0002-4000-8000-000000000002",
+      "name": "Set Tire Size",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://tire.vdim.app/api/v1/reverse_lookup",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "tiresize",
+              "value": "={{ $json.tiresize }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c3d4e5f6-0003-4000-8000-000000000003",
+      "name": "Reverse Lookup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_ME",
+          "name": "Tire API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "vehicles",
+        "options": {}
+      },
+      "id": "c3d4e5f6-0004-4000-8000-000000000004",
+      "name": "Split Out Vehicles",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [480, 300]
+    }
+  ],
+  "connections": {
+    "When clicking Execute": {
+      "main": [[{ "node": "Set Tire Size", "type": "main", "index": 0 }]]
+    },
+    "Set Tire Size": {
+      "main": [[{ "node": "Reverse Lookup", "type": "main", "index": 0 }]]
+    },
+    "Reverse Lookup": {
+      "main": [[{ "node": "Split Out Vehicles", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "pinData": {}
+}
