@@ -1,0 +1,147 @@
+{
+  "name": "Tire API – Usage / Rate-Limit Check",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "d4e5f6a7-0001-4000-8000-000000000001",
+      "name": "When clicking Execute",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-220, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://tire.vdim.app/api/v1/usage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "d4e5f6a7-0002-4000-8000-000000000002",
+      "name": "Check Usage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [0, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_ME",
+          "name": "Tire API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f-plan",
+              "name": "plan",
+              "value": "={{ $json.data.subscriptionType }}",
+              "type": "string"
+            },
+            {
+              "id": "f-daily-limit",
+              "name": "dailyLimit",
+              "value": "={{ $json.data.dailyLimit }}",
+              "type": "number"
+            },
+            {
+              "id": "f-daily-used",
+              "name": "dailyUsed",
+              "value": "={{ $json.data.dailyUsed }}",
+              "type": "number"
+            },
+            {
+              "id": "f-daily-remaining",
+              "name": "dailyRemaining",
+              "value": "={{ $json.data.dailyRemaining }}",
+              "type": "number"
+            },
+            {
+              "id": "f-hourly-remaining",
+              "name": "hourlyRemaining",
+              "value": "={{ $json.data.hourlyRemaining }}",
+              "type": "number"
+            },
+            {
+              "id": "f-usage-pct",
+              "name": "usagePercentage",
+              "value": "={{ $json.data.usagePercentage }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d4e5f6a7-0003-4000-8000-000000000003",
+      "name": "Extract Usage Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-low-quota",
+              "leftValue": "={{ $json.dailyRemaining }}",
+              "rightValue": 50,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d4e5f6a7-0004-4000-8000-000000000004",
+      "name": "Daily Remaining < 50?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {},
+      "id": "d4e5f6a7-0005-4000-8000-000000000005",
+      "name": "Low quota – pause / alert here",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {},
+      "id": "d4e5f6a7-0006-4000-8000-000000000006",
+      "name": "Quota OK – continue here",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [680, 400]
+    }
+  ],
+  "connections": {
+    "When clicking Execute": {
+      "main": [[{ "node": "Check Usage", "type": "main", "index": 0 }]]
+    },
+    "Check Usage": {
+      "main": [[{ "node": "Extract Usage Fields", "type": "main", "index": 0 }]]
+    },
+    "Extract Usage Fields": {
+      "main": [[{ "node": "Daily Remaining < 50?", "type": "main", "index": 0 }]]
+    },
+    "Daily Remaining < 50?": {
+      "main": [
+        [{ "node": "Low quota – pause / alert here", "type": "main", "index": 0 }],
+        [{ "node": "Quota OK – continue here", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "pinData": {}
+}

@@ -11,6 +11,7 @@ Import a `.json` file, bind your API key once as a credential, and run.
 | `01-cascading-vehicle-lookup.json` | Drill down Year → Make → Model → Trim → Tire Size | `GET /by_vehicle/model`, `/by_vehicle/trim`, `/by_vehicle/tiresize` |
 | `02-tire-dimensions-lookup.json` | Get width / aspect ratio / diameter for one vehicle | `GET /tire_dimensions` |
 | `03-reverse-lookup.json` | Given a tire size, find vehicles that use it | `GET /reverse_lookup` |
+| `04-usage-check.json` | Check your plan, daily limit, and remaining calls; branch when quota is low | `GET /usage` |
 
 ---
 
@@ -92,6 +93,21 @@ also query by individual components instead: `width=225&aspectratio=60&diameter=
 **Response shape:** `{ "success": true, "vehicles": [ { "year": "...", "make": "...", "model": "...", "trim": "...", "tiresize": "..." } ], "count": N }`.
 The **Split Out Vehicles** node expands `vehicles[]` into one item per matching vehicle.
 
+### 04 – Usage / rate-limit check
+Calls `GET /usage` and reports your plan and remaining quota. The flow is:
+**Check Usage** → **Extract Usage Fields** (pulls `plan`, `dailyLimit`, `dailyUsed`,
+`dailyRemaining`, `hourlyRemaining`, `usagePercentage`) → **Daily Remaining < 50?** (an IF node).
+
+**Response shape:** `{ "success": true, "data": { "subscriptionType": "free", "dailyLimit": 300, "dailyUsed": 4, "dailyRemaining": 296, "hourlyRemaining": 99, "usagePercentage": 1 } }`.
+
+The IF node has two branches:
+- **Low quota** (`dailyRemaining < 50`) → wire this to an alert/stop (Slack, email, or **Stop And Error**).
+- **Quota OK** → wire this to the rest of your workflow.
+
+Use it as a **guard before a bulk run**: place this check first, and only proceed on the
+"Quota OK" branch. Adjust the threshold (default `50`) in the IF node to suit your job size.
+Plan limits: free = 300/day (100/hr), starter = 5,000/day, pro = 50,000/day, business = 80,000/day.
+
 ---
 
 ## 5. Build your own node against any endpoint
@@ -117,7 +133,8 @@ Other useful endpoints:
 ## 6. Rate limits & error handling
 
 Responses include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset`
-headers. Plan limits range from 300 requests/day (Free) up to Enterprise/Premium tiers.
+headers. Plan limits range from 300 requests/day (Free) through Starter (5,000),
+Pro (50,000), and Business (80,000).
 
 - **Check usage before bulk runs:** call `GET /usage` and read `data.dailyRemaining`.
 - **Handle `429 Too Many Requests`:** in the HTTP Request node open **Settings** and enable
